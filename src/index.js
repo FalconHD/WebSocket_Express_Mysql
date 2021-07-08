@@ -1,8 +1,8 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const jwt = require('jsonwebtoken');
 const { coords } = require('../models/models')
 // const auth = require('../routers/AuthRouters')
 const middlewares = require('../middlewares/errors');
@@ -38,20 +38,26 @@ const wss = new WebSocket.Server({ server });
 
 wss.on('connection', function connection(ws) {
     console.log('A new client Connected!');
-    ws.send('Welcome New Client!');
+    console.log(ws.protocol); // this is token 
+
 
     ws.on('message', function incoming(message) {
-        console.log('received: %s', message);
-
-        wss.clients.forEach(function each(client) {
-            if (client !== ws && client.readyState === WebSocket.OPEN) {
-                client.send(message);
+        jwt.verify(ws.protocol, 'secret_key', async (err, authData) => {
+            if (err) {
+                console.log(err);
+            } else {
+                console.log('received: %s' , authData.dd);
+                wss.clients.forEach(function each(client) {
+                    if (client !== ws && client.readyState === WebSocket.OPEN) {
+                        console.debug('success');
+                    }
+                });
             }
-        });
+        })
 
-    });
-});
 
+    })
+})
 
 
 app.get('/coords', async (req, res) => {
